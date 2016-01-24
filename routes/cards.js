@@ -80,7 +80,7 @@ router.get('/:id_card/selected',function(req,res,next){
 
 //카드에 대한 댓글 리스트 가져오기
 router.get('/:id_card/comment', function(req, res, next) {
-     connection.query('select id_card, comment, answer from cards_sel where id_card='+req.params.id_card+' and comment!=""  order by regdate desc;', function (error, cursor) {
+     connection.query('select id_card, comment, answer, comment_like from cards_sel where id_card='+req.params.id_card+' and comment!=""  order by regdate desc;', function (error, cursor) {
        if(cursor.length>0){
 		console.log(cursor.length)
 		res.json(cursor);
@@ -88,10 +88,10 @@ router.get('/:id_card/comment', function(req, res, next) {
        else
 	res.json("no");
        });
-});
+     });
 
     
-//댓글 작성   
+//카드에 대한 댓글 등록    
 router.post('/:id_card/comment', function(req, res) {
       console.log(req.body);
       connection.query('insert into cards_sel (uuid, id_card, comment, answer, alarm) values (?,?,?,?,3);',                         
@@ -99,7 +99,7 @@ router.post('/:id_card/comment', function(req, res) {
         if (error == null) {
       connection.query('update cards set count_comment=count_comment+1 WHERE id_card=?;', [req.params.id_card], function(error, cursor) {});
 
-      connection.query('select id_card,answer, comment from cards_sel where id_card=? and alarm=3 order by regdate desc;',[req.params.id_card], function (error, cursor) {
+      connection.query('select id_card,answer, comment, comment_like from cards_sel where id_card=? and alarm=3 order by regdate desc;',[req.params.id_card], function (error, cursor) {
 		console.log(cursor);
                 if (cursor.length > 0) {
                     res.json({
@@ -123,32 +123,49 @@ router.post('/:id_card/comment', function(req, res) {
 
 
 
+//카드 댓글리스트 불러오기 (Top3 + 최신순)
+router.get('/:id_card/comment_sort', function(req, res) {
+      console.log(req.body);                   
+      connection.query('(select cs.id_card, cs.answer, cs.comment_like from cards_sel cs order by comment_like desc limit 3)' +
+            ' UNION (select x.id_card, x.answer,  x.comment_like  from (select * FROM cards_sel cs WHERE cs.id_card =? not in(SELECT * FROM' +
+                 ' (select cs.id_card from cards_sel cs order by comment_like desc limit 3) as t) order by cs.regdate desc) as x); ' 
+             ,[req.params.id_card], function (error, cursor) {
+                console.log(cursor);
+                 res.json(cursor);
+            });
+       });
+
+
 //댓글 좋아요 등록(보류)
-//router.post('/:id_card/comment_like', function(req, res) {
-//      console.log(req.body);
-//      connection.query('update cards set comment_like=comment_like+1 WHERE comment=?;', [req.params.comment], 
-//function(error, cursor) {});
-//console.log(query);
-//console.log(cursor);
-//res.json(cursor);
-//});
+router.post('/:id_card/comment_like', function(req, res) {
+      	console.log(req.body);
+     	connection.query('update cards_sel set comment_like=comment_like+1 WHERE comment=? and id_card=?;', [req.body.comment, req.params.id_card], function(error, cursor) {
+		console.log(error);
+		connection.query('select id_card, comment_like from cards_sel where comment=? and id_card=?;', [req.body.comment, req.params.id_card], function(error, cursor){
+			console.log(cursor[0]);
+			res.json(cursor[0]);
+		});
+	});
+});
+
+
 
 //댓글 좋아요 등록
-router.post('/:id_card/comment_like', function(req, res) {
-      console.log(req.body);
-      connection.query('insert into cards (id_card,uuid,question,count_yes,count_no,count_comment,count_like) values (?,?,?,?,3);',          
-                     [req.body.uuid, req.params.id_card, req.body.comment, req.body.answer], function (error, info) {
-        if (error == null) {
-      connection.query('update cards set comment_like=comment_like+1 WHERE id_card=?;', [req.params.id_card], function(error, cursor) {});
-
-      connection.query('select id_card,question,comment,count_yes,count_no,count_comment,comment_like from cards'
-   +' where id_card=? order by regdate desc;',[req.params.id_card], function (error, cursor) {                            
-                   console.log(cursor);
-                        res.json(cursor);
-		});
-	};
-});
-});
+//router.post('/:id_card/comment_like', function(req, res) {
+//      console.log(req.body);
+//      connection.query('insert into cards (id_card,uuid,question,count_yes,count_no,count_comment,comment_like) values (?,?,?,?,?,?,?);',          
+//                     [req.body.uuid, req.params.id_card, req.body.question, req.body.count_yes, req.body.count_no, req.body.count_comment, req.body.comment_like], function (error, info) {
+//        if (error == null) {
+//      connection.query('update cards set comment_like=comment_like+1 WHERE id_card=?;', [req.params.id_card], function(error, cursor) {});
+//
+//      connection.query('select id_card,question,comment,count_yes,count_no,count_comment,comment_like from cards'
+//   +' where id_card=? order by regdate desc;',[req.params.id_card], function (error, cursor) {                            
+//                   console.log(cursor);
+//                        res.json(cursor);
+//		});
+//	};
+//});
+//});
 
   
 //인기 카드 목록 조회(보류)
@@ -166,7 +183,7 @@ router.post('/:id_card/comment_like', function(req, res) {
 
 //인기 카드 목록 조회(yes no의합계가 가장 많은 순)
 router.get('/hottest/:uuid', function(req, res, next) {
-    connection.query('select id_card, question, count_comment,count_yes, count_no, sum(count_yes + count_no)  from cards '
+    connection.query('select id_card, question, count_comment,count_yes, count_no, regdate, sum(count_yes + count_no)  from cards '
                      +'where regdate > now() - INTERVAL 1 MONTH and not exists (select distinct cards_sel.id_card from cards_sel where uuid=? and cards_sel.id_card=cards.id_card) group by id_card order by sum(count_yes + count_no) desc limit 4;',[req.params.uuid] ,function (query, cursor) {
       console.log(query);
       console.log(cursor);
@@ -190,7 +207,7 @@ router.get('/hottest/:uuid', function(req, res, next) {
 
 //최신 카드 목록 조회 (내가 선택한 카드 빼고 최근 1달동안의 카드 랜덤 선택)
 router.get('/latest/:uuid', function(req, res, next) {
-  connection.query('select id_card, question, count_comment, count_yes, count_no from cards' +' where regdate > now() - INTERVAL 1 MONTH and not exists(select distinct cards_sel.id_card from cards_sel where uuid=? and cards_sel.id_card=cards.id_card)' + ' order by rand() limit 4; ', [req.params.uuid],
+  connection.query('select id_card, question, count_comment, count_yes, count_no, regdate from cards' +' where regdate > now() - INTERVAL 1 MONTH and not exists(select distinct cards_sel.id_card from cards_sel where uuid=? and cards_sel.id_card=cards.id_card)' + ' order by rand() limit 4; ', [req.params.uuid],
 function (error, cursor) {
         console.log(cursor.length);
       res.json(cursor);
@@ -223,9 +240,6 @@ router.get('/nearby', function(req, res, next) {
 
 
 
-
-
-
-
-
 module.exports = router;
+
+
