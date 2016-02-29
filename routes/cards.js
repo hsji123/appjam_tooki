@@ -48,8 +48,12 @@ router.post('/', function(req, res, next) {
 router.post('/:id_card/select', function(req, res, next) {
     var alarm=0;
     if(req.body.answer=="yes"){
+<<<<<<< HEAD
         
         alarm=1;
+=======
+	alarm=1;
+>>>>>>> e939783317d81b4cd18ae1ab3966868710964064
         connection.query('UPDATE cards SET count_yes=count_yes+1 WHERE id_card=?;', [req.params.id_card], function(error, cursor) {});
     }
     else if(req.body.answer=="no"){
@@ -57,9 +61,22 @@ router.post('/:id_card/select', function(req, res, next) {
         connection.query('UPDATE cards SET count_no=count_no+1 WHERE id_card=?;', [req.params.id_card], function(error, cursor) {});
     }
     console.log(req.params.id_card);
+<<<<<<< HEAD
     
 	connection.query('insert into cards_sel (id_card, uuid, answer, alarm) values (?, ?, ?, ?);',
     [req.params.id_card, req.body.uuid, req.body.answer, alarm, req.params.id_card]], function(error,info){
+=======
+    console.log(req.body.uuid);
+    console.log(req.body.answer);
+    console.log(alarm);
+    query="update cards_sel set uuid=\""+req.body.uuid+"\", answer=\""+req.body.answer+"\", alarm="+alarm+" where id_card="+req.params.id_card+" and comment is null;";
+    console.log(query);
+	connection.query('insert into cards_sel (id_card) values (?);',[req.params.id_card], function(error,info){
+		connection.query(query, function(error, cursor){
+        		console.log(cursor);
+			res.json(cursor); 
+		});
+>>>>>>> e939783317d81b4cd18ae1ab3966868710964064
 	});
 });
 
@@ -181,7 +198,11 @@ router.post('/:id_card/comment_like', function(req, res) {
 //인기 카드 목록 조회(yes no의합계가 가장 많은 순)
 router.get('/hottest/:uuid', function(req, res, next) {
     connection.query('select id_card, question, count_comment,count_yes, count_no, regdate, sum(count_yes + count_no)  from cards '
+<<<<<<< HEAD
                      +'where regdate > now() - INTERVAL 1 MONTH and not exists (select distinct cards_sel.id_card from cards_sel where uuid=? and cards_sel.id_card=cards.id_card) group by id_card order by sum(count_yes + count_no) desc limit 4;',[req.params.uuid] ,function (query, cursor) {
+=======
+                     +'where regdate > now() - INTERVAL 1 MONTH and not exists (select distinct cards_sel.id_card from cards_sel where uuid=? and cards_sel.id_card=cards.id_card) group by id_card order by sum(count_yes + count_no) desc limit 10;',[req.params.uuid] ,function (query, cursor) {
+>>>>>>> e939783317d81b4cd18ae1ab3966868710964064
       console.log(query);
       console.log(cursor);
       res.json(cursor);
@@ -204,7 +225,11 @@ router.get('/hottest/:uuid', function(req, res, next) {
 
 //최신 카드 목록 조회 (내가 선택한 카드 빼고 최근 1달동안의 카드 랜덤 선택)
 router.get('/latest/:uuid', function(req, res, next) {
+<<<<<<< HEAD
   connection.query('select id_card, question, count_comment, count_yes, count_no, regdate from cards' +' where regdate > now() - INTERVAL 1 MONTH and not exists(select distinct cards_sel.id_card from cards_sel where uuid=? and cards_sel.id_card=cards.id_card)' + ' order by rand() limit 4; ', [req.params.uuid],
+=======
+  connection.query('select id_card, question, count_comment, count_yes, count_no, regdate from cards' +' where regdate > now() - INTERVAL 1 MONTH and not exists(select distinct cards_sel.id_card from cards_sel where uuid=? and cards_sel.id_card=cards.id_card)' + ' order by rand() limit 10; ', [req.params.uuid],
+>>>>>>> e939783317d81b4cd18ae1ab3966868710964064
 function (error, cursor) {
         console.log(cursor.length);
       res.json(cursor);
