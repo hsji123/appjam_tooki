@@ -37,7 +37,7 @@ router.get('/:uuid/select', function(req, res, next) {
 
 //내가 댓글단  카드
 router.get('/:uuid/comment', function(req, res, next) {
-    connection.query('select c.id_card, c.question, cs.answer, c.count_yes, c.count_no, c.count_comment, c.regdate from cards as c, cards_sel as cs where cs.uuid=? and c.id_card=cs.id_card and cs.alarm=3 '
+    connection.query('select distinct c.id_card, c.question, cs.answer, c.count_yes, c.count_no, c.count_comment, c.regdate from cards as c, cards_sel as cs where cs.uuid=? and c.id_card=cs.id_card and cs.alarm=3 '
                      +'order by cs.regdate desc;', 
                      [req.params.uuid], function (error, cursor) {
 	console.log(cursor.length);
@@ -65,11 +65,14 @@ router.get('/:uuid/alarm', function(req, res, next) {
 router.get('/:uuid', function(req, res, next) {
      connection.query('select uuid from users where uuid=? ;',
  [req.params.uuid], function (error, cursor) {
- if(cursor.length>0)
-	res.json(cursor[0]);
- else
-	res.json({"uuid" : "no"});
-       });
+ 	if(cursor!=null){
+ 		if(cursor.length>0)
+			res.json(cursor[0]);
+		 else
+			res.json({"uuid" : "no"});
+	 }
+  });
+ 
 });
 
 //사용자 탈퇴
