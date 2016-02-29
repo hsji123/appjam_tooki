@@ -37,11 +37,8 @@ router.get('/:uuid/select', function(req, res, next) {
 
 //내가 댓글단  카드
 router.get('/:uuid/comment', function(req, res, next) {
-<<<<<<< HEAD
-    connection.query('select c.id_card, c.question, cs.answer, c.count_yes, c.count_no, c.count_comment, c.regdate from cards as c, cards_sel as cs where cs.uuid=? and c.id_card=cs.id_card and cs.alarm=3 '
-=======
+    //connection.query('select c.id_card, c.question, cs.answer, c.count_yes, c.count_no, c.count_comment, c.regdate from cards as c, cards_sel as cs where cs.uuid=? and c.id_card=cs.id_card and cs.alarm=3 '
     connection.query('select distinct c.id_card, c.question, cs.answer, c.count_yes, c.count_no, c.count_comment, c.regdate from cards as c, cards_sel as cs where cs.uuid=? and c.id_card=cs.id_card and cs.alarm=3 '
->>>>>>> e939783317d81b4cd18ae1ab3966868710964064
                      +'order by cs.regdate desc;', 
                      [req.params.uuid], function (error, cursor) {
 	console.log(cursor.length);
@@ -49,15 +46,6 @@ router.get('/:uuid/comment', function(req, res, next) {
     });
 });
 
-
-<<<<<<< HEAD
-=======
-
-
-
-
-
->>>>>>> e939783317d81b4cd18ae1ab3966868710964064
 //카드에 대한 정보 받아오기(alarm)
 router.get('/:uuid/alarm', function(req, res, next) {
      connection.query('select cs.id_card, c.question, cs.alarm, cs.regdate from cards_sel as cs, cards as c where c.uuid=? and c.id_card=cs.id_card and cs.regdate > now() - INTERVAL 7 day order by cs.regdate desc;',
@@ -72,13 +60,6 @@ router.get('/:uuid/alarm', function(req, res, next) {
 router.get('/:uuid', function(req, res, next) {
      connection.query('select uuid from users where uuid=? ;',
  [req.params.uuid], function (error, cursor) {
-<<<<<<< HEAD
- if(cursor.length>0)
-	res.json(cursor[0]);
- else
-	res.json({"uuid" : "no"});
-       });
-=======
  	if(cursor!=null){
  		if(cursor.length>0)
 			res.json(cursor[0]);
@@ -86,8 +67,6 @@ router.get('/:uuid', function(req, res, next) {
 			res.json({"uuid" : "no"});
 	 }
   });
- 
->>>>>>> e939783317d81b4cd18ae1ab3966868710964064
 });
 
 //사용자 탈퇴
@@ -120,7 +99,6 @@ router.post('/:uuid/signout', function(req, res){
 
 //사용자 추가 
 router.post('/:uuid', function(req, res) {
-<<<<<<< HEAD
     var uuid = req.params.uuid;
     connection.query('select uuid from users where uuid=? ;', [uuid], function (error, cursor) {
         if(cursor.length>0){
@@ -136,30 +114,7 @@ router.post('/:uuid', function(req, res) {
                 }
             });
         }
-    });             
-=======
-    var uuid = req.params.uuid;   
-    connection.query('insert into users (uuid) values (?);',              
-                     [uuid], 
-                     function (error, cursor) {
-        if (error == null) {
-            connection.query('select uuid from users where uuid=?;',[req.params.uuid], 
-                             
-                             function (error, cursor) {
-                if (cursor.length > 0) {
-                    res.json({
-                        result : true,
-                        uuid : cursor[0].uuid,
-                    });
-                }
-               else
-                    res.status(503).json({ result : false, reason : "Cannot add user" });
-            });
-        }
-        else
-            res.status(503).json(error);
-    });                    
->>>>>>> e939783317d81b4cd18ae1ab3966868710964064
+    });
 });
 
 module.exports = router;
